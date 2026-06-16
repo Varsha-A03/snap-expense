@@ -15,14 +15,5 @@
 }
 
 .confirm-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 2rem 1.5rem;
-}
-
-.confirm-card {
-  width: 100%;
-  max-width: 520px;
+  padding: 0;
 }
