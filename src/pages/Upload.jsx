@@ -5,7 +5,9 @@ import {
   MdClose,
   MdArrowForward,
   MdErrorOutline,
+  MdAutoAwesome,
 } from 'react-icons/md';
+import { extractTransaction } from '../lib/extractTransaction';
 import '../styles/upload.css';
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
@@ -42,6 +44,7 @@ export default function Upload() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dragging, setDragging] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState('');
 
   function applyFile(selected) {
@@ -58,7 +61,6 @@ export default function Upload() {
   function handleInputChange(event) {
     const selected = event.target.files?.[0];
     if (selected) applyFile(selected);
-    // Reset input so re-selecting the same file still fires onChange
     event.target.value = '';
   }
 
@@ -86,9 +88,35 @@ export default function Upload() {
     setError('');
   }
 
-  function handleContinue() {
+  function goToConfirm(extracted = null) {
     if (!file || !preview) return;
-    navigate('/confirm', { state: { previewUrl: preview, fileName: file.name, fileSize: file.size } });
+    navigate('/confirm', {
+      state: {
+        previewUrl: preview,
+        fileName: file.name,
+        fileSize: file.size,
+        file,
+        extracted,
+      },
+    });
+  }
+
+  async function handleExtract() {
+    if (!file || !preview) return;
+    setError('');
+    setExtracting(true);
+
+    try {
+      const extracted = await extractTransaction(file);
+      goToConfirm(extracted);
+    } catch (err) {
+      setError(
+        err.message ||
+          'Could not extract details. Try again or enter manually.',
+      );
+    } finally {
+      setExtracting(false);
+    }
   }
 
   return (
@@ -109,17 +137,18 @@ export default function Upload() {
       )}
 
       <div className="upload-grid">
-        {/* ── Dropzone ── */}
         <div
-          className={`dropzone${dragging ? ' dragging' : ''}`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => inputRef.current?.click()}
+          className={`dropzone${dragging ? ' dragging' : ''}${extracting ? ' disabled' : ''}`}
+          onDragOver={extracting ? undefined : handleDragOver}
+          onDragLeave={extracting ? undefined : handleDragLeave}
+          onDrop={extracting ? undefined : handleDrop}
+          onClick={extracting ? undefined : () => inputRef.current?.click()}
           role="button"
-          tabIndex={0}
+          tabIndex={extracting ? -1 : 0}
           aria-label="Click or drag a screenshot here to upload"
-          onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+          onKeyDown={(e) =>
+            !extracting && e.key === 'Enter' && inputRef.current?.click()
+          }
         >
           <input
             ref={inputRef}
@@ -129,6 +158,7 @@ export default function Upload() {
             onChange={handleInputChange}
             aria-hidden="true"
             tabIndex={-1}
+            disabled={extracting}
           />
           <MdCloudUpload size={48} className="dropzone-icon" />
           <p className="dropzone-title">
@@ -140,7 +170,6 @@ export default function Upload() {
           <p className="dropzone-formats">JPG · PNG · up to 10 MB</p>
         </div>
 
-        {/* ── Preview or tips ── */}
         {preview ? (
           <div className="preview-panel">
             <div className="preview-image-wrapper">
@@ -149,14 +178,22 @@ export default function Upload() {
                 alt="Uploaded screenshot preview"
                 className="preview-image"
               />
-              <button
-                type="button"
-                className="preview-remove"
-                onClick={handleRemove}
-                aria-label="Remove image"
-              >
-                <MdClose size={16} />
-              </button>
+              {extracting && (
+                <div className="preview-extracting-overlay" aria-live="polite">
+                  <div className="extracting-spinner" />
+                  <p>Extracting details…</p>
+                </div>
+              )}
+              {!extracting && (
+                <button
+                  type="button"
+                  className="preview-remove"
+                  onClick={handleRemove}
+                  aria-label="Remove image"
+                >
+                  <MdClose size={16} />
+                </button>
+              )}
             </div>
             <div className="preview-meta">
               <span className="preview-meta-name">{file?.name}</span>
@@ -180,23 +217,39 @@ export default function Upload() {
         )}
       </div>
 
-      {/* ── Actions ── */}
       {preview && (
         <div className="upload-actions" style={{ marginTop: '1.5rem' }}>
           <button
             type="button"
             className="btn-upload btn-upload-secondary"
             onClick={handleRemove}
+            disabled={extracting}
           >
             Choose different image
           </button>
           <button
             type="button"
-            className="btn-upload btn-upload-primary"
-            onClick={handleContinue}
+            className="btn-upload btn-upload-secondary"
+            onClick={() => goToConfirm()}
+            disabled={extracting}
           >
-            Continue to Confirm
+            Enter manually
             <MdArrowForward size={18} />
+          </button>
+          <button
+            type="button"
+            className="btn-upload btn-upload-primary"
+            onClick={handleExtract}
+            disabled={extracting}
+          >
+            {extracting ? (
+              'Extracting…'
+            ) : (
+              <>
+                <MdAutoAwesome size={18} />
+                Extract details
+              </>
+            )}
           </button>
         </div>
       )}

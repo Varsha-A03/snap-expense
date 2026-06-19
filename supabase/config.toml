@@ -1,0 +1,4 @@
+project_id = "snap-expense"
+
+[functions.extract-transaction]
+verify_jwt = true

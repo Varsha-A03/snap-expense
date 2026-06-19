@@ -6,6 +6,8 @@ import {
   MdArrowBack,
   MdSave,
 } from 'react-icons/md';
+import { useAuth } from '../hooks/useAuth';
+import { saveTransaction } from '../lib/transactions';
 import '../styles/confirm.css';
 
 const CATEGORIES = [
@@ -25,16 +27,21 @@ function todayString() {
 export default function Confirm() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { user } = useAuth();
 
   // Image passed from Upload page via router state
   const previewUrl = state?.previewUrl ?? null;
   const fileName = state?.fileName ?? '';
+  const file = state?.file ?? null;
 
-  // Form fields — will be pre-filled by AI in a future phase
-  const [merchant, setMerchant] = useState('');
-  const [amount, setAmount] = useState('');
+  // Form fields — pre-filled from AI extraction when available
+  const extracted = state?.extracted ?? null;
+  const [merchant, setMerchant] = useState(extracted?.merchant ?? '');
+  const [amount, setAmount] = useState(
+    extracted?.amount != null ? String(extracted.amount) : '',
+  );
   const [category, setCategory] = useState('Other');
-  const [date, setDate] = useState(todayString());
+  const [date, setDate] = useState(extracted?.date ?? todayString());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -50,6 +57,12 @@ export default function Confirm() {
   async function handleSave(event) {
     event.preventDefault();
     setError('');
+
+    if (!user) {
+      setError('You must be logged in to save a transaction.');
+      return;
+    }
+
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -57,14 +70,26 @@ export default function Confirm() {
     }
 
     setSaving(true);
-    // Database save will be wired here in the next phase (Day 4)
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSaving(false);
-    setSuccess(true);
 
-    setTimeout(() => {
-      navigate('/dashboard', { replace: true });
-    }, 1200);
+    try {
+      await saveTransaction({
+        file,
+        userId: user.id,
+        amount,
+        merchant,
+        category,
+        transactionDate: date,
+      });
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 1200);
+    } catch (err) {
+      setError(err.message || 'Failed to save transaction. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -73,6 +98,9 @@ export default function Confirm() {
         <header className="page-header">
           <h1>Confirm Transaction</h1>
           <p>Review and edit the details before saving.</p>
+          {extracted && (
+            <p className="confirm-ai-badge">Details auto-filled from your screenshot</p>
+          )}
         </header>
 
         <div className="confirm-layout">
