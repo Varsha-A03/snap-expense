@@ -12,14 +12,25 @@ function getFileExtension(mimeType) {
 }
 
 /**
+ * Fetch all transactions for the logged-in user (RLS filters by user).
+ * Sorted newest first.
+ */
+export async function fetchTransactions() {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .order('transaction_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to load transactions: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+/**
  * Upload receipt image and insert a transaction row.
- * @param {object} params
- * @param {File} [params.file] - Screenshot file from upload flow
- * @param {string} params.userId - Authenticated user's id
- * @param {number|string} params.amount
- * @param {string} params.merchant
- * @param {string} params.category
- * @param {string} params.transactionDate - YYYY-MM-DD
  */
 export async function saveTransaction({
   file,
@@ -73,8 +84,6 @@ export async function saveTransaction({
 
 /**
  * Get a temporary signed URL for a private receipt image.
- * @param {string} imagePath - Path stored in transactions.image_url
- * @param {number} expiresIn - Seconds until URL expires (default 1 hour)
  */
 export async function getReceiptImageUrl(imagePath, expiresIn = 3600) {
   if (!imagePath) return null;

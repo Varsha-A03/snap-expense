@@ -17,3 +17,9 @@
 .confirm-page {
   padding: 0;
 }
+
+@media (max-width: 640px) {
+  .layout-content {
+    padding: 1rem;
+  }
+}
