@@ -99,3 +99,17 @@ Optional: set `VITE_RECEIPTS_BUCKET=your-exact-bucket-name` in `.env.local` if y
 3. Screenshot uploads to `receipts/{user_id}/{uuid}.jpg`
 4. Row inserted into `transactions` with amount, merchant, category, date, and image path
 
+## Progressive Web App
+
+SnapExpense can be installed from supported browsers and opened in a
+standalone app window.
+
+After deploying, open the production URL and use:
+
+- Chrome/Edge desktop: install icon in the address bar
+- Android Chrome: menu → **Add to Home screen** or **Install app**
+- iPhone/iPad Safari: Share → **Add to Home Screen**
+
+The application shell is cached for offline opening. Authentication,
+transaction loading, uploads, AI extraction, and saves still require an
+internet connection because they use Supabase and Gemini.
