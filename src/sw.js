@@ -54,7 +54,7 @@ async function handleShareTarget(request) {
 }
 
 function extractSharedFile(formData) {
-  for (const key of ['image', 'media', 'file', 'files']) {
+  for (const key of ['file', 'image', 'media', 'files']) {
     const value = formData.get(key);
     if (value && typeof value !== 'string') {
       return value;

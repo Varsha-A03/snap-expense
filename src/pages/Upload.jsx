@@ -13,6 +13,7 @@ import {
   consumeSharedImageFromCache,
   takePendingShare,
 } from '../lib/sharedImage';
+import PwaShareDiagnostics from '../components/PwaShareDiagnostics';
 import '../styles/upload.css';
 
 const TIPS = [
@@ -318,6 +319,8 @@ export default function Upload() {
           </button>
         </div>
       )}
+
+      <PwaShareDiagnostics />
     </>
   );
 }
