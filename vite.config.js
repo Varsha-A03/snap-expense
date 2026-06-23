@@ -33,7 +33,7 @@ export default defineConfig({
             files: [
               {
                 name: 'file',
-                accept: ['image/jpeg', 'image/png', 'image/webp', '.jpg', '.jpeg', '.png', '.webp'],
+                accept: ['image/*', 'image/jpeg', 'image/png', 'image/webp'],
               },
             ],
           },

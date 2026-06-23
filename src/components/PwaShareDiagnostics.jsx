@@ -83,9 +83,9 @@ export default function PwaShareDiagnostics() {
       )}
       {status.standalone && (
         <p className="pwa-diagnostics-note">
-          If SnapExpense is missing from Gallery share, open{' '}
-          <code>chrome://webapks</code> in Chrome and confirm SnapExpense is listed.
-          Then uninstall and reinstall after each manifest update.
+          If missing on this phone but works on another device, open{' '}
+          <code>chrome://webapks</code>, tap Update on SnapExpense, then
+          uninstall and reinstall. Older Samsung models often keep a stale WebAPK.
         </p>
       )}
       {status.error && <p className="pwa-diagnostics-error">{status.error}</p>}
