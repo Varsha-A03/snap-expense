@@ -104,6 +104,13 @@ export default function Upload() {
         return;
       }
 
+      if (sharedParam === 'pdf') {
+        setError(
+          'PDF receipts are not supported yet. Share a screenshot (JPG/PNG) instead.',
+        );
+        return;
+      }
+
       let sharedFile =
         location.state?.sharedFile ?? takePendingShare() ?? null;
 

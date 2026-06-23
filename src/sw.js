@@ -19,19 +19,30 @@ self.addEventListener('fetch', (event) => {
 async function handleShareTarget(request) {
   try {
     const formData = await request.formData();
-    const image = formData.get('image');
+    const sharedFile = extractSharedFile(formData);
 
-    if (!image || typeof image === 'string') {
+    if (!sharedFile) {
+      return Response.redirect('/upload?shared=error', 303);
+    }
+
+    if (sharedFile.type === 'application/pdf') {
+      return Response.redirect('/upload?shared=pdf', 303);
+    }
+
+    if (!sharedFile.type.startsWith('image/')) {
       return Response.redirect('/upload?shared=error', 303);
     }
 
     const cache = await caches.open(SHARED_IMAGE_CACHE);
     await Promise.all([
-      cache.put(SHARED_IMAGE_KEY, new Response(image)),
+      cache.put(SHARED_IMAGE_KEY, new Response(sharedFile)),
       cache.put(
         SHARED_META_KEY,
         new Response(
-          JSON.stringify({ filename: image.name, type: image.type }),
+          JSON.stringify({
+            filename: sharedFile.name,
+            type: sharedFile.type,
+          }),
         ),
       ),
     ]);
@@ -40,4 +51,21 @@ async function handleShareTarget(request) {
   } catch {
     return Response.redirect('/upload?shared=error', 303);
   }
+}
+
+function extractSharedFile(formData) {
+  for (const key of ['image', 'media', 'file', 'files']) {
+    const value = formData.get(key);
+    if (value && typeof value !== 'string') {
+      return value;
+    }
+  }
+
+  for (const value of formData.values()) {
+    if (value && typeof value !== 'string') {
+      return value;
+    }
+  }
+
+  return null;
 }

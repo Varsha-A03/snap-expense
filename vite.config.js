@@ -33,9 +33,6 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         categories: ['finance', 'productivity', 'utilities'],
-        launch_handler: {
-          client_mode: 'navigate-existing',
-        },
         share_target: {
           action: `${pwaOrigin}/share-target`,
           method: 'POST',
@@ -46,10 +43,8 @@ export default defineConfig({
                 name: 'image',
                 accept: [
                   'image/jpeg',
-                  'image/jpg',
                   'image/png',
                   'image/webp',
-                  'image/*',
                   '.jpg',
                   '.jpeg',
                   '.png',
@@ -71,6 +66,12 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
+          },
+          {
+            src: '/pwa-maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },

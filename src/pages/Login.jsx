@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MdReceipt, MdEmail, MdArrowBack, MdShare } from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
+import PwaInstallGuide from '../components/PwaInstallGuide';
 import '../styles/login.css';
 
 export default function Login() {
@@ -74,6 +75,8 @@ export default function Login() {
         </section>
 
         <section className="login-card">
+          <PwaInstallGuide />
+
           <div className="login-card-header">
             <h2>{step === 'email' ? 'Welcome back' : 'Verify your email'}</h2>
             <p>
