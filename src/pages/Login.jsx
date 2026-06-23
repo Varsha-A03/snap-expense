@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { MdReceipt, MdEmail, MdArrowBack } from 'react-icons/md';
+import { useSearchParams } from 'react-router-dom';
+import { MdReceipt, MdEmail, MdArrowBack, MdShare } from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
 import '../styles/login.css';
 
 export default function Login() {
   const { sendOtp, verifyOtp } = useAuth();
+  const [searchParams] = useSearchParams();
+  const pendingShare = searchParams.get('shared') === '1';
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -79,6 +82,13 @@ export default function Login() {
                 : 'Enter the 6-digit code we sent you.'}
             </p>
           </div>
+
+          {pendingShare && (
+            <div className="alert alert-info" role="status">
+              <MdShare size={18} />
+              Sign in to add your shared payment screenshot.
+            </div>
+          )}
 
           {error && (
             <div className="alert alert-error" role="alert">

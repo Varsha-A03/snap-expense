@@ -7,6 +7,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       includeAssets: ['se-192x192.png', 'se-512x512.png'],
       manifest: {
@@ -22,6 +25,22 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         categories: ['finance', 'productivity', 'utilities'],
+        launch_handler: {
+          client_mode: 'navigate-existing',
+        },
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            files: [
+              {
+                name: 'image',
+                accept: ['image/jpeg', 'image/png', 'image/jpg'],
+              },
+            ],
+          },
+        },
         icons: [
           {
             src: '/se-192x192.png',
@@ -37,29 +56,8 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
-        navigateFallback: '/index.html',
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'google-font-stylesheets',
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-font-files',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-            },
-          },
-        ],
       },
     }),
   ],

@@ -250,6 +250,15 @@
   border: 1px solid #bbf7d0;
 }
 
+.alert-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
 .login-footer {
   margin: 1.5rem 0 0;
   font-size: 0.8rem;

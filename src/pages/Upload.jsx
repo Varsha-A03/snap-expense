@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MdCloudUpload,
   MdClose,
@@ -8,11 +8,12 @@ import {
   MdAutoAwesome,
 } from 'react-icons/md';
 import { extractTransaction } from '../lib/extractTransaction';
+import { validateFile } from '../lib/fileValidation';
+import {
+  consumeSharedImageFromCache,
+  takePendingShare,
+} from '../lib/sharedImage';
 import '../styles/upload.css';
-
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
-const MAX_SIZE_MB = 10;
-const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
 const TIPS = [
   'Use screenshots from GPay, PhonePe, Paytm, or any UPI app.',
@@ -27,25 +28,19 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function validateFile(file) {
-  if (!ACCEPTED_TYPES.includes(file.type)) {
-    return 'Only JPG and PNG images are supported.';
-  }
-  if (file.size > MAX_SIZE_BYTES) {
-    return `File is too large. Maximum size is ${MAX_SIZE_MB} MB.`;
-  }
-  return null;
-}
-
 export default function Upload() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const inputRef = useRef(null);
+  const shareHandled = useRef(false);
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState('');
+  const [sharedNotice, setSharedNotice] = useState('');
 
   function applyFile(selected) {
     setError('');
@@ -57,6 +52,85 @@ export default function Upload() {
     setFile(selected);
     setPreview(URL.createObjectURL(selected));
   }
+
+  const goToConfirm = useCallback(
+    (selectedFile, selectedPreview, extracted = null) => {
+      if (!selectedFile || !selectedPreview) return;
+      navigate('/confirm', {
+        state: {
+          previewUrl: selectedPreview,
+          fileName: selectedFile.name,
+          fileSize: selectedFile.size,
+          file: selectedFile,
+          extracted,
+        },
+      });
+    },
+    [navigate],
+  );
+
+  const runExtraction = useCallback(
+    async (selectedFile, selectedPreview) => {
+      setError('');
+      setExtracting(true);
+
+      try {
+        const extracted = await extractTransaction(selectedFile);
+        goToConfirm(selectedFile, selectedPreview, extracted);
+      } catch (err) {
+        setError(
+          err.message ||
+            'Could not extract details. Try again or enter manually.',
+        );
+      } finally {
+        setExtracting(false);
+      }
+    },
+    [goToConfirm],
+  );
+
+  useEffect(() => {
+    if (shareHandled.current) return;
+
+    const sharedParam = searchParams.get('shared');
+    if (!sharedParam) return;
+
+    shareHandled.current = true;
+    setSearchParams({}, { replace: true });
+
+    async function loadSharedImage() {
+      if (sharedParam === 'error') {
+        setError('Could not receive the shared image. Please try again.');
+        return;
+      }
+
+      let sharedFile =
+        location.state?.sharedFile ?? takePendingShare() ?? null;
+
+      if (!sharedFile) {
+        sharedFile = await consumeSharedImageFromCache();
+      }
+
+      if (!sharedFile) {
+        setError('No shared image found. Please upload a screenshot manually.');
+        return;
+      }
+
+      const validationError = validateFile(sharedFile);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
+      setSharedNotice('Screenshot received from share. Extracting details…');
+      const previewUrl = URL.createObjectURL(sharedFile);
+      setFile(sharedFile);
+      setPreview(previewUrl);
+      await runExtraction(sharedFile, previewUrl);
+    }
+
+    loadSharedImage();
+  }, [location.state, runExtraction, searchParams, setSearchParams]);
 
   function handleInputChange(event) {
     const selected = event.target.files?.[0];
@@ -88,35 +162,13 @@ export default function Upload() {
     setError('');
   }
 
-  function goToConfirm(extracted = null) {
-    if (!file || !preview) return;
-    navigate('/confirm', {
-      state: {
-        previewUrl: preview,
-        fileName: file.name,
-        fileSize: file.size,
-        file,
-        extracted,
-      },
-    });
+  function goToConfirmManual(extracted = null) {
+    goToConfirm(file, preview, extracted);
   }
 
   async function handleExtract() {
     if (!file || !preview) return;
-    setError('');
-    setExtracting(true);
-
-    try {
-      const extracted = await extractTransaction(file);
-      goToConfirm(extracted);
-    } catch (err) {
-      setError(
-        err.message ||
-          'Could not extract details. Try again or enter manually.',
-      );
-    } finally {
-      setExtracting(false);
-    }
+    await runExtraction(file, preview);
   }
 
   return (
@@ -128,6 +180,12 @@ export default function Upload() {
           details for you.
         </p>
       </header>
+
+      {sharedNotice && !error && (
+        <div className="upload-notice" role="status">
+          {sharedNotice}
+        </div>
+      )}
 
       {error && (
         <div className="upload-error" role="alert">
@@ -230,7 +288,7 @@ export default function Upload() {
           <button
             type="button"
             className="btn-upload btn-upload-secondary"
-            onClick={() => goToConfirm()}
+            onClick={() => goToConfirmManual()}
             disabled={extracting}
           >
             Enter manually
