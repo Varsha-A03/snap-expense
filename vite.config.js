@@ -2,6 +2,14 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const pwaOrigin =
+  process.env.VITE_PWA_ORIGIN ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://snap-expense-gray.vercel.app');
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -29,14 +37,24 @@ export default defineConfig({
           client_mode: 'navigate-existing',
         },
         share_target: {
-          action: '/share-target',
+          action: `${pwaOrigin}/share-target`,
           method: 'POST',
           enctype: 'multipart/form-data',
           params: {
             files: [
               {
                 name: 'image',
-                accept: ['image/jpeg', 'image/png', 'image/jpg'],
+                accept: [
+                  'image/jpeg',
+                  'image/jpg',
+                  'image/png',
+                  'image/webp',
+                  'image/*',
+                  '.jpg',
+                  '.jpeg',
+                  '.png',
+                  '.webp',
+                ],
               },
             ],
           },
