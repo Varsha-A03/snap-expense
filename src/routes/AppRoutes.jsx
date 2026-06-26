@@ -7,6 +7,7 @@ import Dashboard from '../pages/Dashboard';
 import Upload from '../pages/Upload';
 import Confirm from '../pages/Confirm';
 import History from '../pages/History';
+import Sources from '../pages/Sources';
 
 export default function AppRoutes() {
   return (
@@ -21,6 +22,7 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/history" element={<History />} />
+            <Route path="/sources" element={<Sources />} />
           </Route>
           <Route path="/confirm" element={<Confirm />} />
         </Route>

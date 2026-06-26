@@ -8,6 +8,21 @@ export const CATEGORIES = [
   'Other',
 ];
 
+export const DIRECTIONS = {
+  credit: {
+    value: 'credit',
+    label: 'Money in',
+    shortLabel: 'In',
+    hint: 'Added to your account (received)',
+  },
+  debit: {
+    value: 'debit',
+    label: 'Money out',
+    shortLabel: 'Out',
+    hint: 'Removed from your account (spent)',
+  },
+};
+
 const CHART_COLORS = [
   '#4f46e5',
   '#2563eb',
@@ -54,6 +69,60 @@ export function getTotalAmount(transactions) {
   return transactions.reduce((sum, t) => sum + Number(t.amount), 0);
 }
 
+export function getSignedAmount(transaction) {
+  const amount = Number(transaction.amount) || 0;
+  const direction = transaction.direction ?? 'debit';
+  return direction === 'credit' ? amount : -amount;
+}
+
+export function getBalance(transactions) {
+  return transactions.reduce((sum, t) => sum + getSignedAmount(t), 0);
+}
+
+export function getTotalByDirection(transactions, direction) {
+  return transactions
+    .filter((t) => t.direction === direction)
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+}
+
+export function getSourceName(transaction) {
+  return transaction.sources?.name ?? 'Unassigned';
+}
+
+export function groupBySource(transactions) {
+  const map = new Map();
+
+  for (const t of transactions) {
+    const key = t.source_id ?? '__unassigned__';
+    const name = getSourceName(t);
+
+    if (!map.has(key)) {
+      map.set(key, {
+        id: t.source_id,
+        name,
+        moneyIn: 0,
+        moneyOut: 0,
+        balance: 0,
+        count: 0,
+      });
+    }
+
+    const bucket = map.get(key);
+    const amount = Number(t.amount) || 0;
+    bucket.count += 1;
+
+    if (t.direction === 'credit') {
+      bucket.moneyIn += amount;
+    } else {
+      bucket.moneyOut += amount;
+    }
+
+    bucket.balance = bucket.moneyIn - bucket.moneyOut;
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.balance - a.balance);
+}
+
 export function getCurrentMonthTransactions(transactions) {
   const now = new Date();
   const year = now.getFullYear();
@@ -70,6 +139,7 @@ export function groupByCategory(transactions) {
   const map = {};
 
   for (const t of transactions) {
+    if (t.direction !== 'debit') continue;
     const cat = t.category || 'Other';
     map[cat] = (map[cat] || 0) + Number(t.amount);
   }
@@ -103,16 +173,29 @@ export function groupByMonth(transactions, monthCount = 6) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const bucket = months.find((m) => m.key === key);
     if (bucket) {
-      bucket.total += Number(t.amount);
+      bucket.total += getSignedAmount(t);
     }
   }
 
   return months.map(({ label, total }) => ({ month: label, total }));
 }
 
-export function filterTransactions(transactions, { search = '', category = 'All', month = '' }) {
+export function filterTransactions(
+  transactions,
+  { search = '', category = 'All', month = '', source = 'All', direction = 'All' },
+) {
   return transactions.filter((t) => {
     if (category !== 'All' && t.category !== category) return false;
+
+    if (direction !== 'All' && t.direction !== direction) return false;
+
+    if (source !== 'All') {
+      if (source === '__unassigned__') {
+        if (t.source_id) return false;
+      } else if (t.source_id !== source) {
+        return false;
+      }
+    }
 
     if (month) {
       const d = parseDateOnly(t.transaction_date);
@@ -128,6 +211,22 @@ export function filterTransactions(transactions, { search = '', category = 'All'
 
     return true;
   });
+}
+
+export function getSourceFilterOptions(transactions, sources) {
+  const usedIds = new Set(
+    transactions.map((t) => t.source_id).filter(Boolean),
+  );
+
+  const options = sources
+    .filter((s) => usedIds.has(s.id))
+    .map((s) => ({ value: s.id, label: s.name }));
+
+  if (transactions.some((t) => !t.source_id)) {
+    options.push({ value: '__unassigned__', label: 'Unassigned' });
+  }
+
+  return options.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export function getMonthOptions(transactions) {

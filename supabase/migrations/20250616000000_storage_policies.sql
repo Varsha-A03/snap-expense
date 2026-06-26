@@ -2,6 +2,10 @@
 -- Run this in Supabase Dashboard → SQL Editor
 -- Replace 'receipts' below if your bucket uses a different name.
 
+DROP POLICY IF EXISTS "Users can upload own receipts" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view own receipts" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own receipts" ON storage.objects;
+
 -- Allow authenticated users to upload into their own folder: {user_id}/...
 CREATE POLICY "Users can upload own receipts"
 ON storage.objects FOR INSERT

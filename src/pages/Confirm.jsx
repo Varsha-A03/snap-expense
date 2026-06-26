@@ -5,9 +5,13 @@ import {
   MdErrorOutline,
   MdArrowBack,
   MdSave,
+  MdAdd,
+  MdRemove,
 } from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
 import { saveTransaction } from '../lib/transactions';
+import { DIRECTIONS } from '../lib/transactionUtils';
+import SourceSelector from '../components/SourceSelector';
 import '../styles/confirm.css';
 
 const CATEGORIES = [
@@ -29,12 +33,10 @@ export default function Confirm() {
   const { state } = useLocation();
   const { user } = useAuth();
 
-  // Image passed from Upload page via router state
   const previewUrl = state?.previewUrl ?? null;
   const fileName = state?.fileName ?? '';
   const file = state?.file ?? null;
 
-  // Form fields — pre-filled from AI extraction when available
   const extracted = state?.extracted ?? null;
   const [merchant, setMerchant] = useState(extracted?.merchant ?? '');
   const [amount, setAmount] = useState(
@@ -42,6 +44,8 @@ export default function Confirm() {
   );
   const [category, setCategory] = useState('Other');
   const [date, setDate] = useState(extracted?.date ?? todayString());
+  const [direction, setDirection] = useState('debit');
+  const [sourceId, setSourceId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -51,6 +55,7 @@ export default function Confirm() {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
       return 'Please enter a valid amount greater than 0.';
     if (!date) return 'Please select a date.';
+    if (!sourceId) return 'Please select or add a money source.';
     return null;
   }
 
@@ -79,6 +84,8 @@ export default function Confirm() {
         merchant,
         category,
         transactionDate: date,
+        direction,
+        sourceId,
       });
 
       setSuccess(true);
@@ -104,7 +111,6 @@ export default function Confirm() {
         </header>
 
         <div className="confirm-layout">
-          {/* ── Screenshot thumbnail ── */}
           <div className="confirm-image-panel">
             {previewUrl ? (
               <>
@@ -124,7 +130,6 @@ export default function Confirm() {
             )}
           </div>
 
-          {/* ── Form ── */}
           <div className="confirm-form-card">
             <p className="confirm-form-title">Transaction Details</p>
 
@@ -143,16 +148,54 @@ export default function Confirm() {
             )}
 
             <form className="confirm-form" onSubmit={handleSave}>
-              {/* Merchant */}
+              <div className="field">
+                <span className="field-label">Transaction type</span>
+                <p className="field-hint">
+                  Credit = money added to your account. Debit = money removed.
+                </p>
+                <div className="direction-toggle" role="group" aria-label="Transaction type">
+                  {Object.values(DIRECTIONS).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`direction-pill direction-${opt.value}${
+                        direction === opt.value ? ' selected' : ''
+                      }`}
+                      onClick={() => setDirection(opt.value)}
+                    >
+                      {opt.value === 'credit' ? (
+                        <MdAdd size={18} />
+                      ) : (
+                        <MdRemove size={18} />
+                      )}
+                      <span>
+                        <strong>{opt.label}</strong>
+                        <small>{opt.hint}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <SourceSelector
+                value={sourceId}
+                onChange={setSourceId}
+                disabled={saving || success}
+              />
+
               <div className="field">
                 <label className="field-label" htmlFor="merchant">
-                  Merchant
+                  {direction === 'credit' ? 'From / description' : 'Merchant'}
                 </label>
                 <input
                   id="merchant"
                   type="text"
                   className="field-input"
-                  placeholder="e.g. Zomato, Swiggy, Amazon"
+                  placeholder={
+                    direction === 'credit'
+                      ? 'e.g. Salary, Friend A, Refund'
+                      : 'e.g. Zomato, Swiggy, Amazon'
+                  }
                   value={merchant}
                   onChange={(e) => setMerchant(e.target.value)}
                   required
@@ -160,7 +203,6 @@ export default function Confirm() {
                 />
               </div>
 
-              {/* Amount */}
               <div className="field">
                 <label className="field-label" htmlFor="amount">
                   Amount (₹)
@@ -181,7 +223,6 @@ export default function Confirm() {
                 </div>
               </div>
 
-              {/* Date */}
               <div className="field">
                 <label className="field-label" htmlFor="date">
                   Date
@@ -197,26 +238,26 @@ export default function Confirm() {
                 />
               </div>
 
-              {/* Category */}
-              <div className="field">
-                <span className="field-label">Category</span>
-                <div className="category-pills" role="group" aria-label="Category">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      className={`category-pill${category === cat ? ' selected' : ''}`}
-                      onClick={() => setCategory(cat)}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+              {direction === 'debit' && (
+                <div className="field">
+                  <span className="field-label">Category</span>
+                  <div className="category-pills" role="group" aria-label="Category">
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`category-pill${category === cat ? ' selected' : ''}`}
+                        onClick={() => setCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="confirm-divider" />
 
-              {/* Actions */}
               <div className="confirm-actions">
                 <button
                   type="button"

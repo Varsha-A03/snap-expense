@@ -10,15 +10,15 @@ import {
 import { formatCurrency } from '../lib/transactionUtils';
 
 export default function MonthlyBarChart({ data }) {
-  if (!data.some((d) => d.total > 0)) {
-    return <p className="chart-empty">No monthly spending data yet.</p>;
+  if (!data.some((d) => d.total !== 0)) {
+    return <p className="chart-empty">No monthly activity data yet.</p>;
   }
 
   return (
     <div
       className="chart-visual"
       role="img"
-      aria-label={`Monthly spending: ${data
+      aria-label={`Monthly net change: ${data
         .map((item) => `${item.month} ${formatCurrency(item.total)}`)
         .join(', ')}`}
     >
@@ -45,16 +45,16 @@ export default function MonthlyBarChart({ data }) {
             tickLine={false}
             axisLine={false}
             tickFormatter={(v) =>
-              `₹${v >= 1000 ? `${Number((v / 1000).toFixed(1))}k` : v}`
+              `₹${Math.abs(v) >= 1000 ? `${Number((v / 1000).toFixed(1))}k` : v}`
             }
           />
           <Tooltip
             cursor={{ fill: '#eef2ff' }}
-            formatter={(value) => [formatCurrency(value), 'Spent']}
+            formatter={(value) => [formatCurrency(value), 'Net change']}
           />
           <Bar
             dataKey="total"
-            name="Spent"
+            name="Net change"
             fill="#4f46e5"
             radius={[6, 6, 0, 0]}
             maxBarSize={48}

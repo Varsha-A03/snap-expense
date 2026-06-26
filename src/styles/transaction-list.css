@@ -29,6 +29,19 @@
   font-size: 0.95rem;
 }
 
+.transaction-item-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.transaction-source {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
 .transaction-amount {
   font-weight: 700;
   color: var(--color-text);
@@ -36,11 +49,42 @@
   white-space: nowrap;
 }
 
+.transaction-amount-credit {
+  color: #15803d;
+}
+
+.transaction-amount-debit {
+  color: #b91c1c;
+}
+
 .transaction-item-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.transaction-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.transaction-direction {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 2rem;
+}
+
+.transaction-direction-credit {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.transaction-direction-debit {
+  color: #b91c1c;
+  background: #fef2f2;
 }
 
 .transaction-category {

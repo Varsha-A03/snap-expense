@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { MdDashboard, MdUpload, MdHistory, MdLogout } from 'react-icons/md';
+import { MdDashboard, MdUpload, MdHistory, MdLogout, MdSource } from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
 import '../styles/navbar.css';
 
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: MdDashboard },
   { to: '/upload', label: 'Upload', icon: MdUpload },
   { to: '/history', label: 'History', icon: MdHistory },
+  { to: '/sources', label: 'Sources', icon: MdSource },
 ];
 
 function getInitials(email) {

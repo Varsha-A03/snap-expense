@@ -18,7 +18,7 @@ function getFileExtension(mimeType) {
 export async function fetchTransactions() {
   const { data, error } = await supabase
     .from('transactions')
-    .select('*')
+    .select('*, sources(id, name)')
     .order('transaction_date', { ascending: false })
     .order('created_at', { ascending: false });
 
@@ -39,6 +39,8 @@ export async function saveTransaction({
   merchant,
   category,
   transactionDate,
+  direction = 'debit',
+  sourceId = null,
 }) {
   let imageUrl = null;
 
@@ -71,8 +73,10 @@ export async function saveTransaction({
       category,
       transaction_date: transactionDate,
       image_url: imageUrl,
+      direction,
+      source_id: sourceId || null,
     })
-    .select()
+    .select('*, sources(id, name)')
     .single();
 
   if (error) {

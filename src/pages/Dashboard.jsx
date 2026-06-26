@@ -1,18 +1,27 @@
 import { Link } from 'react-router-dom';
-import { MdAccountBalanceWallet, MdCalendarMonth, MdReceipt } from 'react-icons/md';
+import {
+  MdAccountBalanceWallet,
+  MdCalendarMonth,
+  MdReceipt,
+  MdAdd,
+  MdRemove,
+} from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
 import { useTransactions } from '../hooks/useTransactions';
 import SummaryCard from '../components/SummaryCard';
 import CategoryPieChart from '../components/CategoryPieChart';
 import MonthlyBarChart from '../components/MonthlyBarChart';
 import TransactionList from '../components/TransactionList';
+import SourceBreakdown from '../components/SourceBreakdown';
 import LoadingScreen from '../components/LoadingScreen';
 import {
   formatCurrency,
-  getTotalAmount,
+  getBalance,
+  getTotalByDirection,
   getCurrentMonthTransactions,
   groupByCategory,
   groupByMonth,
+  groupBySource,
 } from '../lib/transactionUtils';
 import '../styles/dashboard.css';
 
@@ -29,10 +38,14 @@ export default function Dashboard() {
   }
 
   const monthTransactions = getCurrentMonthTransactions(transactions);
-  const totalSpend = getTotalAmount(transactions);
-  const monthSpend = getTotalAmount(monthTransactions);
+  const balance = getBalance(transactions);
+  const moneyIn = getTotalByDirection(transactions, 'credit');
+  const moneyOut = getTotalByDirection(transactions, 'debit');
+  const monthMoneyIn = getTotalByDirection(monthTransactions, 'credit');
+  const monthMoneyOut = getTotalByDirection(monthTransactions, 'debit');
   const categoryData = groupByCategory(transactions);
   const monthlyData = groupByMonth(transactions);
+  const sourceData = groupBySource(transactions);
   const recentTransactions = transactions.slice(0, 5);
   const topCategory = categoryData[0]?.name;
 
@@ -45,14 +58,26 @@ export default function Dashboard() {
 
       <section className="dashboard-summary">
         <SummaryCard
-          title="Total Expenses"
-          value={formatCurrency(totalSpend)}
-          subtitle="All time"
+          title="Account Balance"
+          value={formatCurrency(balance)}
+          subtitle="Money in minus money out"
           icon={MdAccountBalanceWallet}
         />
         <SummaryCard
+          title="Money In"
+          value={formatCurrency(moneyIn)}
+          subtitle={`${formatCurrency(monthMoneyIn)} this month`}
+          icon={MdAdd}
+        />
+        <SummaryCard
+          title="Money Out"
+          value={formatCurrency(moneyOut)}
+          subtitle={`${formatCurrency(monthMoneyOut)} this month`}
+          icon={MdRemove}
+        />
+        <SummaryCard
           title="This Month"
-          value={formatCurrency(monthSpend)}
+          value={formatCurrency(monthMoneyIn - monthMoneyOut)}
           subtitle={`${monthTransactions.length} transaction${monthTransactions.length !== 1 ? 's' : ''}`}
           icon={MdCalendarMonth}
         />
@@ -64,15 +89,30 @@ export default function Dashboard() {
         />
       </section>
 
+      <section className="dashboard-sources">
+        <div className="dashboard-recent-header">
+          <div>
+            <h2>By Source</h2>
+            <p className="dashboard-section-subtitle">
+              How much you received and spent from each source
+            </p>
+          </div>
+          <Link to="/sources" className="dashboard-recent-link">
+            Manage sources
+          </Link>
+        </div>
+        <SourceBreakdown data={sourceData} />
+      </section>
+
       <section className="dashboard-charts">
         <div className="chart-card">
           <div className="chart-card-header">
             <div>
-              <h2 className="chart-card-title">Category Breakdown</h2>
+              <h2 className="chart-card-title">Spending by Category</h2>
               <p className="chart-card-subtitle">
                 {topCategory
                   ? `${topCategory} is your largest spending category`
-                  : 'Your spending split will appear here'}
+                  : 'Money-out transactions by category'}
               </p>
             </div>
           </div>
@@ -81,8 +121,8 @@ export default function Dashboard() {
         <div className="chart-card">
           <div className="chart-card-header">
             <div>
-              <h2 className="chart-card-title">Monthly Spending</h2>
-              <p className="chart-card-subtitle">Your last six calendar months</p>
+              <h2 className="chart-card-title">Monthly Net Change</h2>
+              <p className="chart-card-subtitle">Money in minus money out per month</p>
             </div>
           </div>
           <MonthlyBarChart data={monthlyData} />
