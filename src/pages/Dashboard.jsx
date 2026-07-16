@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   MdAccountBalanceWallet,
@@ -14,6 +15,7 @@ import MonthlyBarChart from '../components/MonthlyBarChart';
 import TransactionList from '../components/TransactionList';
 import SourceBreakdown from '../components/SourceBreakdown';
 import LoadingScreen from '../components/LoadingScreen';
+import { deleteTransaction } from '../lib/transactions';
 import {
   formatCurrency,
   getBalance,
@@ -27,7 +29,25 @@ import '../styles/dashboard.css';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { transactions, loading, error } = useTransactions();
+  const { transactions, loading, error, reload } = useTransactions();
+  const [deletingId, setDeletingId] = useState(null);
+
+  async function handleDelete(transaction) {
+    const label = transaction.merchant || 'this transaction';
+    if (!window.confirm(`Delete “${label}”? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(transaction.id);
+    try {
+      await deleteTransaction(transaction.id, transaction.image_url);
+      await reload();
+    } catch (err) {
+      window.alert(err.message || 'Could not delete transaction.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   if (loading) {
     return <LoadingScreen message="Loading your dashboard..." />;
@@ -143,7 +163,12 @@ export default function Dashboard() {
             No transactions yet. Upload a screenshot to get started.
           </p>
         ) : (
-          <TransactionList transactions={recentTransactions} compact />
+          <TransactionList
+            transactions={recentTransactions}
+            compact
+            onDelete={handleDelete}
+            deletingId={deletingId}
+          />
         )}
       </section>
     </>

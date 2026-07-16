@@ -75,7 +75,7 @@ export default function Login() {
         </section>
 
         <section className="login-card">
-          <PwaInstallGuide />
+          {/* <PwaInstallGuide /> */}
 
           <div className="login-card-header">
             <h2>{step === 'email' ? 'Welcome back' : 'Verify your email'}</h2>

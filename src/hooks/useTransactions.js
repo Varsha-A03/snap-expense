@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { fetchTransactions } from '../lib/transactions';
 
 export function useTransactions() {
@@ -6,30 +6,23 @@ export function useTransactions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    let cancelled = false;
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError('');
 
-    async function load() {
-      setLoading(true);
-      setError('');
-
-      try {
-        const data = await fetchTransactions();
-        if (!cancelled) setTransactions(data);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.message || 'Failed to load transactions.');
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    try {
+      const data = await fetchTransactions();
+      setTransactions(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load transactions.');
+    } finally {
+      setLoading(false);
     }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  return { transactions, loading, error };
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  return { transactions, loading, error, reload };
 }

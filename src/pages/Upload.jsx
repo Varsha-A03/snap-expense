@@ -6,6 +6,7 @@ import {
   MdArrowForward,
   MdErrorOutline,
   MdAutoAwesome,
+  MdEditNote,
 } from 'react-icons/md';
 import { extractTransaction } from '../lib/extractTransaction';
 import { validateFile } from '../lib/fileValidation';
@@ -20,7 +21,7 @@ const TIPS = [
   'Use screenshots from GPay, PhonePe, Paytm, or any UPI app.',
   'Make sure the amount and merchant name are clearly visible.',
   'JPG and PNG formats are supported up to 10 MB.',
-  'Landscape or portrait screenshots both work fine.',
+  'No screenshot? Use Enter manually for cash or missed transactions.',
 ];
 
 function formatBytes(bytes) {
@@ -55,15 +56,16 @@ export default function Upload() {
   }
 
   const goToConfirm = useCallback(
-    (selectedFile, selectedPreview, extracted = null) => {
-      if (!selectedFile || !selectedPreview) return;
+    (selectedFile, selectedPreview, extracted = null, { manual = false } = {}) => {
+      if (!manual && (!selectedFile || !selectedPreview)) return;
       navigate('/confirm', {
         state: {
-          previewUrl: selectedPreview,
-          fileName: selectedFile.name,
-          fileSize: selectedFile.size,
-          file: selectedFile,
+          previewUrl: selectedPreview ?? null,
+          fileName: selectedFile?.name ?? '',
+          fileSize: selectedFile?.size ?? 0,
+          file: selectedFile ?? null,
           extracted,
+          manual,
         },
       });
     },
@@ -170,8 +172,12 @@ export default function Upload() {
     setError('');
   }
 
-  function goToConfirmManual(extracted = null) {
+  function goToConfirmWithImage(extracted = null) {
     goToConfirm(file, preview, extracted);
+  }
+
+  function goToManualEntry() {
+    goToConfirm(null, null, null, { manual: true });
   }
 
   async function handleExtract() {
@@ -182,10 +188,10 @@ export default function Upload() {
   return (
     <>
       <header className="page-header">
-        <h1>Upload Screenshot</h1>
+        <h1>Add Transaction</h1>
         <p>
-          Upload a UPI payment screenshot. We&apos;ll extract the transaction
-          details for you.
+          Upload a UPI screenshot to auto-fill details, or enter a transaction
+          manually for cash, missed payments, and anything without a receipt.
         </p>
       </header>
 
@@ -283,7 +289,7 @@ export default function Upload() {
         )}
       </div>
 
-      {preview && (
+      {preview ? (
         <div className="upload-actions" style={{ marginTop: '1.5rem' }}>
           <button
             type="button"
@@ -296,10 +302,10 @@ export default function Upload() {
           <button
             type="button"
             className="btn-upload btn-upload-secondary"
-            onClick={() => goToConfirmManual()}
+            onClick={() => goToConfirmWithImage()}
             disabled={extracting}
           >
-            Enter manually
+            Skip extract
             <MdArrowForward size={18} />
           </button>
           <button
@@ -316,6 +322,25 @@ export default function Upload() {
                 Extract details
               </>
             )}
+          </button>
+        </div>
+      ) : (
+        <div className="upload-manual-entry">
+          <div className="upload-manual-divider" aria-hidden="true">
+            <span>or</span>
+          </div>
+          <button
+            type="button"
+            className="btn-upload btn-upload-manual"
+            onClick={goToManualEntry}
+            disabled={extracting}
+          >
+            <MdEditNote size={22} />
+            <span className="upload-manual-text">
+              <strong>Enter manually</strong>
+              <small>Cash, missed UPI, or any transaction without a screenshot</small>
+            </span>
+            <MdArrowForward size={18} className="upload-manual-arrow" />
           </button>
         </div>
       )}

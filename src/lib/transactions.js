@@ -87,6 +87,59 @@ export async function saveTransaction({
 }
 
 /**
+ * Delete a single transaction and its receipt image (if any).
+ */
+export async function deleteTransaction(transactionId, imagePath = null) {
+  const { error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('id', transactionId);
+
+  if (error) {
+    throw new Error(`Failed to delete transaction: ${error.message}`);
+  }
+
+  if (imagePath) {
+    await supabase.storage.from(RECEIPTS_BUCKET).remove([imagePath]);
+  }
+}
+
+/**
+ * Delete every transaction for the logged-in user (RLS-scoped) and clean up receipts.
+ */
+export async function clearAllTransactions() {
+  const { data: rows, error: fetchError } = await supabase
+    .from('transactions')
+    .select('id, image_url');
+
+  if (fetchError) {
+    throw new Error(`Failed to load transactions: ${fetchError.message}`);
+  }
+
+  if (!rows?.length) return 0;
+
+  const imagePaths = rows.map((row) => row.image_url).filter(Boolean);
+
+  const { error: deleteError } = await supabase
+    .from('transactions')
+    .delete()
+    .in(
+      'id',
+      rows.map((row) => row.id),
+    );
+
+  if (deleteError) {
+    throw new Error(`Failed to clear transactions: ${deleteError.message}`);
+  }
+
+  if (imagePaths.length) {
+    await supabase.storage.from(RECEIPTS_BUCKET).remove(imagePaths);
+  }
+
+  return rows.length;
+}
+
+/**
  * Get a temporary signed URL for a private receipt image.
  */
 export async function getReceiptImageUrl(imagePath, expiresIn = 3600) {

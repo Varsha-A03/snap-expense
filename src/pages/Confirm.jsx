@@ -7,6 +7,7 @@ import {
   MdSave,
   MdAdd,
   MdRemove,
+  MdEditNote,
 } from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
 import { saveTransaction } from '../lib/transactions';
@@ -36,6 +37,7 @@ export default function Confirm() {
   const previewUrl = state?.previewUrl ?? null;
   const fileName = state?.fileName ?? '';
   const file = state?.file ?? null;
+  const isManual = Boolean(state?.manual) || (!previewUrl && !file);
 
   const extracted = state?.extracted ?? null;
   const [merchant, setMerchant] = useState(extracted?.merchant ?? '');
@@ -103,10 +105,17 @@ export default function Confirm() {
     <div className="confirm-page">
       <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
         <header className="page-header">
-          <h1>Confirm Transaction</h1>
-          <p>Review and edit the details before saving.</p>
+          <h1>{isManual ? 'Add Transaction' : 'Confirm Transaction'}</h1>
+          <p>
+            {isManual
+              ? 'Fill in the details for cash, missed payments, or any transaction without a receipt.'
+              : 'Review and edit the details before saving.'}
+          </p>
           {extracted && (
             <p className="confirm-ai-badge">Details auto-filled from your screenshot</p>
+          )}
+          {isManual && (
+            <p className="confirm-manual-badge">Manual entry — no receipt attached</p>
           )}
         </header>
 
@@ -124,8 +133,13 @@ export default function Confirm() {
                 <p className="confirm-image-label">{fileName}</p>
               </>
             ) : (
-              <div className="confirm-no-image">
-                <p>No screenshot uploaded. Go back to Upload to add one.</p>
+              <div className="confirm-no-image confirm-no-image-manual">
+                <MdEditNote size={40} aria-hidden="true" />
+                <p>
+                  {isManual
+                    ? 'No screenshot — enter the amount, merchant, category, and source below.'
+                    : 'No screenshot uploaded. Go back to Upload to add one.'}
+                </p>
               </div>
             )}
           </div>

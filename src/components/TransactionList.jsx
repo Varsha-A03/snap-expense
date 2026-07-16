@@ -1,3 +1,4 @@
+import { MdDelete } from 'react-icons/md';
 import {
   formatCurrency,
   formatDate,
@@ -6,7 +7,12 @@ import {
 } from '../lib/transactionUtils';
 import '../styles/transaction-list.css';
 
-export default function TransactionList({ transactions, compact = false }) {
+export default function TransactionList({
+  transactions,
+  compact = false,
+  onDelete,
+  deletingId = null,
+}) {
   if (!transactions.length) {
     return (
       <p className="transaction-list-empty">
@@ -20,6 +26,7 @@ export default function TransactionList({ transactions, compact = false }) {
       {transactions.map((t) => {
         const isCredit = t.direction === 'credit';
         const directionMeta = DIRECTIONS[t.direction] ?? DIRECTIONS.debit;
+        const isDeleting = deletingId === t.id;
 
         return (
           <li key={t.id} className="transaction-item">
@@ -28,12 +35,29 @@ export default function TransactionList({ transactions, compact = false }) {
                 <span className="transaction-merchant">{t.merchant}</span>
                 <span className="transaction-source">{getSourceName(t)}</span>
               </div>
-              <span
-                className={`transaction-amount${isCredit ? ' transaction-amount-credit' : ' transaction-amount-debit'}`}
-              >
-                {isCredit ? '+' : '−'}
-                {formatCurrency(t.amount)}
-              </span>
+              <div className="transaction-item-actions">
+                <span
+                  className={`transaction-amount${isCredit ? ' transaction-amount-credit' : ' transaction-amount-debit'}`}
+                >
+                  {isCredit ? '+' : '−'}
+                  {formatCurrency(t.amount)}
+                </span>
+                {onDelete && (
+                  <button
+                    type="button"
+                    className="transaction-delete-btn"
+                    onClick={() => onDelete(t)}
+                    disabled={isDeleting}
+                    title="Delete transaction"
+                    aria-label={`Delete ${t.merchant} transaction`}
+                  >
+                    <MdDelete size={18} />
+                    <span className="transaction-delete-label">
+                      {isDeleting ? 'Deleting…' : 'Delete'}
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
             <div className="transaction-item-meta">
               <div className="transaction-badges">

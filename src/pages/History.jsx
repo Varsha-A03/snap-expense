@@ -4,6 +4,10 @@ import { useSources } from '../hooks/useSources';
 import TransactionList from '../components/TransactionList';
 import LoadingScreen from '../components/LoadingScreen';
 import {
+  clearAllTransactions,
+  deleteTransaction,
+} from '../lib/transactions';
+import {
   CATEGORIES,
   DIRECTIONS,
   filterTransactions,
@@ -16,13 +20,16 @@ import {
 import '../styles/history.css';
 
 export default function History() {
-  const { transactions, loading, error } = useTransactions();
+  const { transactions, loading, error, reload } = useTransactions();
   const { sources } = useSources();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [month, setMonth] = useState('');
   const [source, setSource] = useState('All');
   const [direction, setDirection] = useState('All');
+  const [deletingId, setDeletingId] = useState(null);
+  const [clearing, setClearing] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const monthOptions = useMemo(
     () => getMonthOptions(transactions),
@@ -49,6 +56,45 @@ export default function History() {
   const filteredBalance = getBalance(filtered);
   const filteredIn = getTotalByDirection(filtered, 'credit');
   const filteredOut = getTotalByDirection(filtered, 'debit');
+
+  async function handleDelete(transaction) {
+    const label = transaction.merchant || 'this transaction';
+    if (!window.confirm(`Delete “${label}”? This cannot be undone.`)) {
+      return;
+    }
+
+    setActionError('');
+    setDeletingId(transaction.id);
+    try {
+      await deleteTransaction(transaction.id, transaction.image_url);
+      await reload();
+    } catch (err) {
+      setActionError(err.message || 'Could not delete transaction.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleClearAll() {
+    if (
+      !window.confirm(
+        `Delete all ${transactions.length} transaction${transactions.length !== 1 ? 's' : ''}? This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setActionError('');
+    setClearing(true);
+    try {
+      await clearAllTransactions();
+      await reload();
+    } catch (err) {
+      setActionError(err.message || 'Could not clear transactions.');
+    } finally {
+      setClearing(false);
+    }
+  }
 
   if (loading) {
     return <LoadingScreen message="Loading transaction history..." />;
@@ -181,11 +227,29 @@ export default function History() {
           </div>
         </div>
 
-        <p className="history-count">
-          {filtered.length} of {transactions.length} transaction
-          {transactions.length !== 1 ? 's' : ''}
-          {hasFilters && ' (filtered)'}
-        </p>
+        <div className="history-list-header">
+          <p className="history-count">
+            {filtered.length} of {transactions.length} transaction
+            {transactions.length !== 1 ? 's' : ''}
+            {hasFilters && ' (filtered)'}
+          </p>
+          {transactions.length > 0 && (
+            <button
+              type="button"
+              className="history-clear-btn"
+              onClick={handleClearAll}
+              disabled={clearing || Boolean(deletingId)}
+            >
+              {clearing ? 'Clearing…' : 'Clear all'}
+            </button>
+          )}
+        </div>
+
+        {actionError && (
+          <p className="history-action-error" role="alert">
+            {actionError}
+          </p>
+        )}
 
         {transactions.length === 0 ? (
           <p className="page-card-placeholder">
@@ -196,7 +260,11 @@ export default function History() {
             No transactions match your filters. Try adjusting search or filters.
           </p>
         ) : (
-          <TransactionList transactions={filtered} />
+          <TransactionList
+            transactions={filtered}
+            onDelete={handleDelete}
+            deletingId={deletingId}
+          />
         )}
       </div>
     </>

@@ -273,17 +273,33 @@
   padding: 1rem;
 }
 
-.confirm-ai-badge {
+.confirm-no-image-manual {
+  flex-direction: column;
+  gap: 0.75rem;
+  color: #94a3b8;
+  padding: 1.5rem;
+}
+
+.confirm-ai-badge,
+.confirm-manual-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   margin-top: 0.5rem;
   padding: 0.35rem 0.75rem;
   border-radius: 2rem;
-  background: #eef2ff;
-  color: #4f46e5;
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.confirm-ai-badge {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.confirm-manual-badge {
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .field-hint {

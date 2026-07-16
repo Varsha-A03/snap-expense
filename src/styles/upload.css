@@ -225,6 +225,93 @@
   color: var(--color-text);
 }
 
+/* ── Manual entry (no screenshot) ─────────────────────── */
+
+.upload-manual-entry {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.upload-manual-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.upload-manual-divider::before,
+.upload-manual-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.btn-upload-manual {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 0.875rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.btn-upload-manual:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: #eef2ff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+}
+
+.btn-upload-manual:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-upload-manual > svg:first-child {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.upload-manual-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-manual-text strong {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.upload-manual-text small {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.upload-manual-arrow {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
 /* ── Tips sidebar ─────────────────────────────────────── */
 
 .upload-tips {
