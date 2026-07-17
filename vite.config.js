@@ -25,6 +25,15 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         categories: ['finance', 'productivity', 'utilities'],
+        // Lets getInstalledRelatedApps() detect whether a real WebAPK
+        // (not a shortcut) is installed for this origin.
+        related_applications: [
+          {
+            platform: 'webapp',
+            url: 'https://snap-expense-tracker.vercel.app/manifest.webmanifest',
+          },
+        ],
+        prefer_related_applications: false,
         share_target: {
           action: '/share-target',
           method: 'POST',
