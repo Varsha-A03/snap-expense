@@ -183,6 +183,40 @@
   font-variant-numeric: tabular-nums;
 }
 
+.login-sent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  align-items: center;
+  text-align: center;
+}
+
+.login-sent-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: var(--color-primary);
+}
+
+.login-sent-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.login-sent-text strong {
+  color: var(--color-text);
+}
+
+.login-sent .btn {
+  width: 100%;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

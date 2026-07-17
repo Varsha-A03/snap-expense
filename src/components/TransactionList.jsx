@@ -1,4 +1,4 @@
-import { MdDelete } from 'react-icons/md';
+import { MdDelete, MdEdit } from 'react-icons/md';
 import {
   formatCurrency,
   formatDate,
@@ -10,6 +10,7 @@ import '../styles/transaction-list.css';
 export default function TransactionList({
   transactions,
   compact = false,
+  onEdit,
   onDelete,
   deletingId = null,
 }) {
@@ -42,6 +43,19 @@ export default function TransactionList({
                   {isCredit ? '+' : '−'}
                   {formatCurrency(t.amount)}
                 </span>
+                {onEdit && (
+                  <button
+                    type="button"
+                    className="transaction-edit-btn"
+                    onClick={() => onEdit(t)}
+                    disabled={isDeleting}
+                    title="Edit transaction"
+                    aria-label={`Edit ${t.merchant} transaction`}
+                  >
+                    <MdEdit size={18} />
+                    <span className="transaction-action-label">Edit</span>
+                  </button>
+                )}
                 {onDelete && (
                   <button
                     type="button"
@@ -52,7 +66,7 @@ export default function TransactionList({
                     aria-label={`Delete ${t.merchant} transaction`}
                   >
                     <MdDelete size={18} />
-                    <span className="transaction-delete-label">
+                    <span className="transaction-action-label">
                       {isDeleting ? 'Deleting…' : 'Delete'}
                     </span>
                   </button>

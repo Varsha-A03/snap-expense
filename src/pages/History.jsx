@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../hooks/useTransactions';
 import { useSources } from '../hooks/useSources';
 import TransactionList from '../components/TransactionList';
@@ -20,6 +21,7 @@ import {
 import '../styles/history.css';
 
 export default function History() {
+  const navigate = useNavigate();
   const { transactions, loading, error, reload } = useTransactions();
   const { sources } = useSources();
   const [search, setSearch] = useState('');
@@ -56,6 +58,10 @@ export default function History() {
   const filteredBalance = getBalance(filtered);
   const filteredIn = getTotalByDirection(filtered, 'credit');
   const filteredOut = getTotalByDirection(filtered, 'debit');
+
+  function handleEdit(transaction) {
+    navigate('/confirm', { state: { editing: transaction } });
+  }
 
   async function handleDelete(transaction) {
     const label = transaction.merchant || 'this transaction';
@@ -262,6 +268,7 @@ export default function History() {
         ) : (
           <TransactionList
             transactions={filtered}
+            onEdit={handleEdit}
             onDelete={handleDelete}
             deletingId={deletingId}
           />

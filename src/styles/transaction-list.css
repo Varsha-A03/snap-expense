@@ -56,15 +56,13 @@
   white-space: nowrap;
 }
 
-.transaction-delete-btn {
+.transaction-delete-btn,
+.transaction-edit-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   padding: 0.4rem 0.55rem;
-  border: 1px solid #fecaca;
   border-radius: 0.5rem;
-  background: #fef2f2;
-  color: #b91c1c;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -72,7 +70,20 @@
   line-height: 1;
 }
 
-.transaction-delete-btn:disabled {
+.transaction-delete-btn {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.transaction-edit-btn {
+  border: 1px solid var(--color-border);
+  background: #f1f5f9;
+  color: var(--color-text-muted);
+}
+
+.transaction-delete-btn:disabled,
+.transaction-edit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -81,7 +92,12 @@
   background: #fee2e2;
 }
 
-.transaction-list.compact .transaction-delete-label {
+.transaction-edit-btn:not(:disabled):hover {
+  background: #e2e8f0;
+  color: var(--color-text);
+}
+
+.transaction-list.compact .transaction-action-label {
   display: none;
 }
 
@@ -163,7 +179,7 @@
     align-items: flex-start;
   }
 
-  .transaction-delete-label {
+  .transaction-action-label {
     display: none;
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MdCheckCircle,
@@ -10,7 +10,11 @@ import {
   MdEditNote,
 } from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
-import { saveTransaction } from '../lib/transactions';
+import {
+  saveTransaction,
+  updateTransaction,
+  getReceiptImageUrl,
+} from '../lib/transactions';
 import { DIRECTIONS } from '../lib/transactionUtils';
 import SourceSelector from '../components/SourceSelector';
 import '../styles/confirm.css';
@@ -34,23 +38,49 @@ export default function Confirm() {
   const { state } = useLocation();
   const { user } = useAuth();
 
-  const previewUrl = state?.previewUrl ?? null;
+  const editing = state?.editing ?? null;
+  const isEditing = Boolean(editing);
+
   const fileName = state?.fileName ?? '';
   const file = state?.file ?? null;
-  const isManual = Boolean(state?.manual) || (!previewUrl && !file);
+  const isManual =
+    !isEditing && (Boolean(state?.manual) || (!state?.previewUrl && !file));
 
   const extracted = state?.extracted ?? null;
-  const [merchant, setMerchant] = useState(extracted?.merchant ?? '');
-  const [amount, setAmount] = useState(
-    extracted?.amount != null ? String(extracted.amount) : '',
+  const [previewUrl, setPreviewUrl] = useState(state?.previewUrl ?? null);
+  const [merchant, setMerchant] = useState(
+    editing?.merchant ?? extracted?.merchant ?? '',
   );
-  const [category, setCategory] = useState('Other');
-  const [date, setDate] = useState(extracted?.date ?? todayString());
-  const [direction, setDirection] = useState('debit');
-  const [sourceId, setSourceId] = useState(null);
+  const [amount, setAmount] = useState(() => {
+    const initial = editing?.amount ?? extracted?.amount;
+    return initial != null ? String(initial) : '';
+  });
+  const [category, setCategory] = useState(editing?.category ?? 'Other');
+  const [date, setDate] = useState(
+    editing?.transaction_date ?? extracted?.date ?? todayString(),
+  );
+  const [direction, setDirection] = useState(editing?.direction ?? 'debit');
+  const [sourceId, setSourceId] = useState(editing?.source_id ?? null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing || !editing?.image_url) return;
+
+    let cancelled = false;
+    getReceiptImageUrl(editing.image_url)
+      .then((url) => {
+        if (!cancelled && url) setPreviewUrl(url);
+      })
+      .catch(() => {
+        // Receipt preview is optional while editing; ignore load failures.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditing, editing?.image_url]);
 
   function validate() {
     if (!merchant.trim()) return 'Please enter a merchant name.';
@@ -79,20 +109,32 @@ export default function Confirm() {
     setSaving(true);
 
     try {
-      await saveTransaction({
-        file,
-        userId: user.id,
-        amount,
-        merchant,
-        category,
-        transactionDate: date,
-        direction,
-        sourceId,
-      });
+      if (isEditing) {
+        await updateTransaction({
+          id: editing.id,
+          amount,
+          merchant,
+          category,
+          transactionDate: date,
+          direction,
+          sourceId,
+        });
+      } else {
+        await saveTransaction({
+          file,
+          userId: user.id,
+          amount,
+          merchant,
+          category,
+          transactionDate: date,
+          direction,
+          sourceId,
+        });
+      }
 
       setSuccess(true);
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        navigate(isEditing ? '/history' : '/dashboard', { replace: true });
       }, 1200);
     } catch (err) {
       setError(err.message || 'Failed to save transaction. Please try again.');
@@ -105,11 +147,19 @@ export default function Confirm() {
     <div className="confirm-page">
       <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto' }}>
         <header className="page-header">
-          <h1>{isManual ? 'Add Transaction' : 'Confirm Transaction'}</h1>
+          <h1>
+            {isEditing
+              ? 'Edit Transaction'
+              : isManual
+                ? 'Add Transaction'
+                : 'Confirm Transaction'}
+          </h1>
           <p>
-            {isManual
-              ? 'Fill in the details for cash, missed payments, or any transaction without a receipt.'
-              : 'Review and edit the details before saving.'}
+            {isEditing
+              ? 'Update the details and save your changes.'
+              : isManual
+                ? 'Fill in the details for cash, missed payments, or any transaction without a receipt.'
+                : 'Review and edit the details before saving.'}
           </p>
           {extracted && (
             <p className="confirm-ai-badge">Details auto-filled from your screenshot</p>
@@ -136,9 +186,11 @@ export default function Confirm() {
               <div className="confirm-no-image confirm-no-image-manual">
                 <MdEditNote size={40} aria-hidden="true" />
                 <p>
-                  {isManual
-                    ? 'No screenshot — enter the amount, merchant, category, and source below.'
-                    : 'No screenshot uploaded. Go back to Upload to add one.'}
+                  {isEditing
+                    ? 'No receipt attached to this transaction.'
+                    : isManual
+                      ? 'No screenshot — enter the amount, merchant, category, and source below.'
+                      : 'No screenshot uploaded. Go back to Upload to add one.'}
                 </p>
               </div>
             )}
@@ -157,7 +209,9 @@ export default function Confirm() {
             {success && (
               <div className="confirm-alert confirm-alert-success" role="status">
                 <MdCheckCircle size={18} />
-                Transaction saved! Redirecting to dashboard…
+                {isEditing
+                  ? 'Transaction updated! Redirecting to history…'
+                  : 'Transaction saved! Redirecting to dashboard…'}
               </div>
             )}
 
@@ -276,11 +330,11 @@ export default function Confirm() {
                 <button
                   type="button"
                   className="btn-confirm btn-confirm-cancel"
-                  onClick={() => navigate('/upload')}
+                  onClick={() => navigate(isEditing ? '/history' : '/upload')}
                   disabled={saving || success}
                 >
                   <MdArrowBack size={18} />
-                  Back
+                  {isEditing ? 'Cancel' : 'Back'}
                 </button>
                 <button
                   type="submit"

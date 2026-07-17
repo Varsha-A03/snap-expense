@@ -1,47 +1,51 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { MdReceipt, MdEmail, MdArrowBack, MdShare } from 'react-icons/md';
+import {
+  MdReceipt,
+  MdEmail,
+  MdArrowBack,
+  MdShare,
+  MdMarkEmailRead,
+} from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
-import PwaInstallGuide from '../components/PwaInstallGuide';
+// import PwaInstallGuide from '../components/PwaInstallGuide';
 import '../styles/login.css';
 
 export default function Login() {
-  const { sendOtp, verifyOtp } = useAuth();
+  const { sendOtp } = useAuth();
   const [searchParams] = useSearchParams();
   const pendingShare = searchParams.get('shared') === '1';
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [resent, setResent] = useState(false);
 
-  async function handleSendOtp(event) {
+  async function handleSendLink(event) {
     event.preventDefault();
     setError('');
-    setMessage('');
     setLoading(true);
 
     try {
       await sendOtp(email.trim());
-      setStep('otp');
-      setMessage(`We sent a 6-digit code to ${email.trim()}`);
+      setStep('sent');
     } catch (err) {
-      setError(err.message || 'Failed to send verification code.');
+      setError(err.message || 'Failed to send sign-in email.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleVerifyOtp(event) {
-    event.preventDefault();
+  async function handleResend() {
     setError('');
+    setResent(false);
     setLoading(true);
 
     try {
-      await verifyOtp(email.trim(), otp.trim());
+      await sendOtp(email.trim());
+      setResent(true);
     } catch (err) {
-      setError(err.message || 'Invalid or expired code. Please try again.');
+      setError(err.message || 'Failed to resend sign-in email.');
     } finally {
       setLoading(false);
     }
@@ -49,9 +53,8 @@ export default function Login() {
 
   function handleBack() {
     setStep('email');
-    setOtp('');
     setError('');
-    setMessage('');
+    setResent(false);
   }
 
   return (
@@ -78,11 +81,11 @@ export default function Login() {
           {/* <PwaInstallGuide /> */}
 
           <div className="login-card-header">
-            <h2>{step === 'email' ? 'Welcome back' : 'Verify your email'}</h2>
+            <h2>{step === 'email' ? 'Welcome back' : 'Check your email'}</h2>
             <p>
               {step === 'email'
-                ? 'Sign in with a one-time code sent to your email.'
-                : 'Enter the 6-digit code we sent you.'}
+                ? 'Sign in with a secure link sent to your email.'
+                : 'Open the sign-in link we just emailed you to continue.'}
             </p>
           </div>
 
@@ -99,14 +102,8 @@ export default function Login() {
             </div>
           )}
 
-          {message && (
-            <div className="alert alert-success" role="status">
-              {message}
-            </div>
-          )}
-
           {step === 'email' ? (
-            <form className="login-form" onSubmit={handleSendOtp}>
+            <form className="login-form" onSubmit={handleSendLink}>
               <label className="form-label" htmlFor="email">
                 Email address
               </label>
@@ -129,34 +126,33 @@ export default function Login() {
                 className="btn btn-primary"
                 disabled={loading || !email.trim()}
               >
-                {loading ? 'Sending code...' : 'Send verification code'}
+                {loading ? 'Sending link...' : 'Send sign-in link'}
               </button>
             </form>
           ) : (
-            <form className="login-form" onSubmit={handleVerifyOtp}>
-              <label className="form-label" htmlFor="otp">
-                Verification code
-              </label>
-              <input
-                id="otp"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                className="form-input otp-input"
-                placeholder="000000"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                required
-                autoComplete="one-time-code"
-                autoFocus
-              />
+            <div className="login-sent">
+              <div className="login-sent-icon" aria-hidden="true">
+                <MdMarkEmailRead size={32} />
+              </div>
+              <p className="login-sent-text">
+                We sent a sign-in link to <strong>{email}</strong>. Open it on
+                this device and you&apos;ll be signed in automatically — you can
+                keep this tab open.
+              </p>
+
+              {resent && (
+                <div className="alert alert-success" role="status">
+                  Sent again — check your inbox (and spam).
+                </div>
+              )}
+
               <button
-                type="submit"
+                type="button"
                 className="btn btn-primary"
-                disabled={loading || otp.length !== 6}
+                onClick={handleResend}
+                disabled={loading}
               >
-                {loading ? 'Verifying...' : 'Verify and continue'}
+                {loading ? 'Resending...' : 'Resend link'}
               </button>
               <button
                 type="button"
@@ -167,7 +163,7 @@ export default function Login() {
                 <MdArrowBack size={18} />
                 Use a different email
               </button>
-            </form>
+            </div>
           )}
 
           <p className="login-footer">

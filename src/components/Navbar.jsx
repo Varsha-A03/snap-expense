@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { MdDashboard, MdUpload, MdHistory, MdLogout, MdSource } from 'react-icons/md';
+import {
+  MdDashboard,
+  MdUpload,
+  MdHistory,
+  MdLogout,
+  MdSource,
+  MdSavings,
+  MdEventRepeat,
+} from 'react-icons/md';
 import { useAuth } from '../hooks/useAuth';
 import '../styles/navbar.css';
 
@@ -9,6 +17,8 @@ const navItems = [
   { to: '/upload', label: 'Upload', icon: MdUpload },
   { to: '/history', label: 'History', icon: MdHistory },
   { to: '/sources', label: 'Sources', icon: MdSource },
+  { to: '/budgets', label: 'Budgets', icon: MdSavings },
+  { to: '/recurring', label: 'Recurring', icon: MdEventRepeat },
 ];
 
 function getInitials(email) {

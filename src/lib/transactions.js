@@ -87,6 +87,39 @@ export async function saveTransaction({
 }
 
 /**
+ * Update an existing transaction's editable fields (receipt image unchanged).
+ */
+export async function updateTransaction({
+  id,
+  amount,
+  merchant,
+  category,
+  transactionDate,
+  direction,
+  sourceId = null,
+}) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({
+      amount: Number(amount),
+      merchant: merchant.trim(),
+      category,
+      transaction_date: transactionDate,
+      direction,
+      source_id: sourceId || null,
+    })
+    .eq('id', id)
+    .select('*, sources(id, name)')
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update transaction: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
  * Delete a single transaction and its receipt image (if any).
  */
 export async function deleteTransaction(transactionId, imagePath = null) {
