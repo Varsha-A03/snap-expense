@@ -15,6 +15,7 @@ import {
   takePendingShare,
 } from '../lib/sharedImage';
 import PwaShareDiagnostics from '../components/PwaShareDiagnostics';
+import PwaInstallGuide from '../components/PwaInstallGuide';
 import '../styles/upload.css';
 
 const TIPS = [
@@ -194,6 +195,8 @@ export default function Upload() {
           manually for cash, missed payments, and anything without a receipt.
         </p>
       </header>
+
+      <PwaInstallGuide />
 
       {sharedNotice && !error && (
         <div className="upload-notice" role="status">

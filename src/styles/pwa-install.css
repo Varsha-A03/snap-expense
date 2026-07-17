@@ -36,6 +36,46 @@
   opacity: 0.5;
 }
 
+.pwa-install-body {
+  min-width: 0;
+}
+
+.pwa-install-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #92400e;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pwa-install-btn:hover:not(:disabled) {
+  background: #78350f;
+}
+
+.pwa-install-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pwa-install-done {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+  align-items: center;
+}
+
+.pwa-install-done .pwa-install-text {
+  margin: 0;
+}
+
 .pwa-diagnostics {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
